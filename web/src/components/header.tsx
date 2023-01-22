@@ -25,7 +25,7 @@ export function Header() {
               <X size={24} aria-label="fechar" />
             </Dialog.Close>
 
-            <Dialog.Title className="text-3xl leading-tight font-extrabold">salve</Dialog.Title>
+            <Dialog.Title className="text-3xl leading-tight font-extrabold">Crie um novo hábito!</Dialog.Title>
 
             <NewHabitForm />
           </Dialog.Content>

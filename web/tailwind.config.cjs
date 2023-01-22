@@ -7,10 +7,10 @@ module.exports = {
         background: "#09090a",
       },
       fontFamily: {
-        regular: "Inter_400Regular",
-        semibold: "Inter_600SemiBold",
-        bold: "Inter_700Bold",
-        extrabold: "Inter_800ExtraBold",
+        regular: "Inter",
+        semibold: "Inter",
+        bold: "Inter",
+        extrabold: "Inter",
       },
       gridTemplateRows: {
         7: "repeat(7, minmax(0, 1fr))",
