@@ -1,16 +1,16 @@
+import dayjs from "dayjs";
 import { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { prisma } from "./lib/prisma";
-import dayjs from "dayjs";
 
 export async function appRoutes(app: FastifyInstance) {
   app.post("/habits", async (request) => {
     const createHabitBody = z.object({
       title: z.string(),
-      weekdays: z.array(z.number().min(0).max(6)),
+      weekDays: z.array(z.number().min(0).max(6)),
     });
 
-    const { title, weekdays } = createHabitBody.parse(request.body);
+    const { title, weekDays } = createHabitBody.parse(request.body);
 
     const today = dayjs().startOf("day").toDate();
 
@@ -18,9 +18,11 @@ export async function appRoutes(app: FastifyInstance) {
       data: {
         title,
         created_at: today,
-        weekdays: {
-          create: weekdays.map((weekDay) => {
-            return { week_day: weekDay };
+        weekDays: {
+          create: weekDays.map((weekDay) => {
+            return {
+              week_day: weekDay,
+            };
           }),
         },
       },
@@ -34,15 +36,15 @@ export async function appRoutes(app: FastifyInstance) {
 
     const { date } = getDayParams.parse(request.query);
 
-    const parseDate = dayjs(date).startOf("day");
-    const weekDay = parseDate.get("day");
+    const parsedDate = dayjs(date).startOf("day");
+    const weekDay = parsedDate.get("day");
 
     const possibleHabits = await prisma.habit.findMany({
       where: {
         created_at: {
           lte: date,
         },
-        weekdays: {
+        weekDays: {
           some: {
             week_day: weekDay,
           },
@@ -50,18 +52,19 @@ export async function appRoutes(app: FastifyInstance) {
       },
     });
 
-    const day = await prisma.day.findUnique({
+    const day = await prisma.day.findFirst({
       where: {
-        date: parseDate.toDate(),
+        date: parsedDate.toDate(),
       },
       include: {
         dayHabits: true,
       },
     });
 
-    const completedHabits = day?.dayHabits.map((dayHabit) => {
-      return dayHabit.habit_id;
-    });
+    const completedHabits =
+      day?.dayHabits.map((dayHabit) => {
+        return dayHabit.habit_id;
+      }) ?? [];
 
     return {
       possibleHabits,
@@ -92,7 +95,7 @@ export async function appRoutes(app: FastifyInstance) {
       });
     }
 
-    let dayHabit = await prisma.dayHabit.findUnique({
+    const dayHabit = await prisma.dayHabit.findUnique({
       where: {
         day_id_habit_id: {
           day_id: day.id,
@@ -117,31 +120,30 @@ export async function appRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get('/sumamry',async () => {
+  app.get("/summary", async () => {
     const summary = await prisma.$queryRaw`
       SELECT 
         D.id, 
         D.date,
-      (
-        SELECT
-          cast(count(*) as float)
-        FROM day_habits dayHabit
-        WHERE DH.day_id = D.id
-      ) as completed
-      (
-        SELECT
-          cast(count(*) as float)
-        FROM habit_week_days HWD
-        JOIN habits H
-          ON H.id = HWD.habit_id
-        WHERE 
-          HWD.week_day = cast(strftime('%w', Ddate/1000.0, 'unixepoch') as int)
-          AND H.created_at <= D.date
-      ) as amount
-
+        (
+          SELECT 
+            cast(count(*) as float)
+          FROM day_habits DH
+          WHERE DH.day_id = D.id
+        ) as completed,
+        (
+          SELECT
+            cast(count(*) as float)
+          FROM habit_week_days HDW
+          JOIN habits H
+            ON H.id = HDW.habit_id
+          WHERE
+            HDW.week_day = cast(strftime('%w', D.date/1000.0, 'unixepoch') as int)
+            AND H.created_at <= D.date
+        ) as amount
       FROM days D
-    `
+    `;
 
-    return summary
-  })
+    return summary;
+  });
 }
