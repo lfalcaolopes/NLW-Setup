@@ -1,3 +1,5 @@
+
+
 <h1 align="center">
     Tracker de hábitos
 </h1>
@@ -14,6 +16,12 @@
  <a href="#-tecnologias-utilizadas">Tecnologias</a> • 
  <a href="#-autor">Autor</a>
 </p>
+
+<h4 align="center">
+    <a href="README.md">Inglês</a>
+    ·
+    <a href="README-pt.md">Português</a>
+ </h4>
 
 ## 🔖 Sobre 
 
